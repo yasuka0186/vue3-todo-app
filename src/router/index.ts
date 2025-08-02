@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 //import HomeView from '../views/HomeView.vue'
-import Signup from '../views/Signup.vue'
-import Login from '../views/Login.vue'
+import Signup from '../views/SignupForm.vue'
+import Login from '../views/LoginForm.vue'
 import TodoList from '../views/TodoList.vue'
 import { auth } from '../firebase/config'
 
