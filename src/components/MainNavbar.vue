@@ -1,9 +1,16 @@
 <template>
-  <nav>
-    <router-link to="/login" v-if="!user">ログイン</router-link>
-    <router-link to="/signup" v-if="!user">新規登録</router-link>
-    <span v-if="userEmail">{{ userEmail }} さん、ようこそ！</span>
-    <button v-if="user" @click="handleLogout">ログアウト</button>
+  <nav class="flex justify-between items-center px-6 py-4 bg-gray-800 text-white">
+    <div class="text-lg font-bold">TODOアプリ</div>
+    <div class="flex items-center gap-4">
+      <span v-if="userEmail">{{ userEmail }} さん、ようこそ！</span>
+      <button
+        v-if="user"
+        @click="handleLogout"
+        class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
+      >
+        ログアウト
+      </button>
+    </div>
   </nav>
 </template>
 

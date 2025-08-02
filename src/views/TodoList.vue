@@ -2,23 +2,54 @@
   <div>
     <h1>TODO一覧</h1>
 
-    <form @submit.prevent="addTodo">
-      <input v-model="newTodo" placeholder="新しいTODOを入力" required />
-      <button type="submit">追加</button>
+    <form @submit.prevent="addTodo" class="flex gap-2 mb-6">
+      <input
+        v-model="newTodo"
+        type="text"
+        placeholder="新しいTODOを入力"
+        class="flex-1 border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring focus:ring-blue-400"
+        required
+      />
+      <button
+        type="submit"
+        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+      >
+        追加
+      </button>
     </form>
 
-    <ul>
-      <li v-for="todo in todos" :key="todo.id">
+    <ul class="space-y-4">
+      <li
+        v-for="todo in todos"
+        :key="todo.id"
+        class="p-4 border rounded shadow-sm flex items-start justify-between bg-white"
+      >
         <div>
-          <strong>{{ todo.title }}</strong>
-          <div>作成日: {{ formatDate(todo.createdAt.toDate()) }}</div>
+          <p class="text-lg font-medium">{{ todo.title }}</p>
+          <p class="text-sm text-gray-500">作成日: {{ formatDate(todo.createdAt.toDate()) }}</p>
+          <span
+            :class="{
+              'text-gray-600': todo.status === '未完了',
+              'text-yellow-600': todo.status === '着手中',
+              'text-green-600': todo.status === '完了',
+            }"
+            class="inline-block mt-1 text-xs font-semibold"
+          >
+            状態: {{ todo.status }}
+          </span>
+          <select
+            v-model="todo.status"
+            @change="updateStatus(todo.id, todo.status)"
+            class="mt-2 border border-gray-300 rounded px-2 py-1 text-sm"
+          >
+            <option value="未完了">未完了</option>
+            <option value="着手中">着手中</option>
+            <option value="完了">完了</option>
+          </select>
         </div>
-        <select v-model="todo.status" @change="updateStatus(todo.id, todo.status)">
-          <option value="未完了">未完了</option>
-          <option value="着手中">着手中</option>
-          <option value="完了">完了</option>
-        </select>
-        <button @click="deleteTodo(todo.id)">削除</button>
+        <button @click="deleteTodo(todo.id)" class="text-red-600 hover:text-red-800 text-sm">
+          削除
+        </button>
       </li>
     </ul>
   </div>
