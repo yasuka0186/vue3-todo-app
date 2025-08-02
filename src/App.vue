@@ -8,14 +8,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { onAuthStateChanged } from 'firebase/auth'
+import { ref, onMounted, provide } from 'vue'
 import { auth } from './firebase/config'
+import { onAuthStateChanged } from 'firebase/auth'
+import type { User } from 'firebase/auth'
+import MainNavbar from './components/MainNavbar.vue'
 
+const user = ref<User | null>(null)
 const isAuthReady = ref(false)
 
+// ✅ Provide user globally
+provide('currentUser', user)
+
 onMounted(() => {
-  onAuthStateChanged(auth, () => {
+  onAuthStateChanged(auth, (currentUser) => {
+    user.value = currentUser
     isAuthReady.value = true
   })
 })
