@@ -1,5 +1,5 @@
 <template>
-  <nav class="fixed top-0 left-0 w-screen z-50 bg-gray-800 text-white shadow-md">
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-gray-800 text-white shadow-md m-0 p-0">
     <div class="flex justify-between items-center px-6 h-16 w-full">
       <div class="text-xl font-bold">TODOアプリ</div>
 

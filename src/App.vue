@@ -17,7 +17,7 @@ import MainNavbar from './components/MainNavbar.vue'
 const user = ref<User | null>(null)
 const isAuthReady = ref(false)
 
-// ✅ Provide user globally
+// Provide user globally
 provide('currentUser', user)
 
 onMounted(() => {
@@ -28,7 +28,7 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style>
 header {
   line-height: 1.5;
   max-height: 100vh;
