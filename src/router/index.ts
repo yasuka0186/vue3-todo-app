@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Signup from '../views/Signup.vue'
 import Login from '../views/Login.vue'
 import TodoList from '../views/TodoList.vue'
+import { auth } from '../firebase/config'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +22,7 @@ const router = createRouter({
       path: '/',
       name: 'TodoList',
       component: TodoList,
+      meta: { requiresAuth: true },
     },
     // {
     //   path: '/',
@@ -36,6 +38,18 @@ const router = createRouter({
     //   component: () => import('../views/AboutView.vue'),
     // },
   ],
+})
+
+// ナビゲーションガードを追加
+router.beforeEach((to, from, next) => {
+  const user = auth.currentUser
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+
+  if (requiresAuth && !user) {
+    next('/login')
+  } else {
+    next()
+  }
 })
 
 export default router
