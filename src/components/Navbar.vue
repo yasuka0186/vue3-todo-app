@@ -1,6 +1,5 @@
 <template>
   <nav>
-    <router-link to="/">Home</router-link>
     <router-link to="/login" v-if="!user">ログイン</router-link>
     <router-link to="/signup" v-if="!user">新規登録</router-link>
     <span v-if="userEmail">{{ userEmail }} さん、ようこそ！</span>
