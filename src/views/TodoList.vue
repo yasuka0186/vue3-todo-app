@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { db } from '../firebase/config'
+import { db, auth } from '../firebase/config'
 import {
   collection,
   addDoc,
@@ -37,20 +37,35 @@ import {
   deleteDoc,
   updateDoc,
   doc,
+  where,
 } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
 
 interface Todo {
   id: string
   title: string
   status: '未完了' | '着手中' | '完了'
   createdAt: Timestamp
+  uid?: string
 }
 
 const newTodo = ref('')
 // ✅ todos に型情報をつける
 const todos = ref<Todo[]>([])
-
 const todosRef = collection(db, 'todos')
+const userId = ref<string | null>(null)
+
+onMounted(() => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      userId.value = user.uid
+      fetchTodos(user.uid)
+    } else {
+      userId.value = null
+      todos.value = []
+    }
+  })
+})
 
 // TODO追加処理
 const addTodo = async () => {
@@ -58,7 +73,9 @@ const addTodo = async () => {
   try {
     await addDoc(todosRef, {
       title: newTodo.value,
+      status: '未完了',
       createdAt: Timestamp.now(),
+      uid: userId.value,
     })
     newTodo.value = ''
   } catch (err) {
@@ -100,20 +117,20 @@ const formatDate = (date: Date): string => {
 // Firestoreのリアルタイム監視（一覧表示）
 let unsubscribe: () => void
 
-onMounted(() => {
-  const q = query(todosRef, orderBy('createdAt', 'desc'))
+const fetchTodos = (uid: string) => {
+  const q = query(todosRef, where('uid', '==', uid), orderBy('createdAt', 'desc'))
   unsubscribe = onSnapshot(q, (snapshot) => {
-    todos.value = snapshot.docs.map((doc) => {
+    todos.value = snapshot.docs.map((doc): Todo => {
       const data = doc.data()
       return {
         id: doc.id,
         title: data.title,
-        status: data.status ?? '未完了', // ← 既存データの対応
+        status: (data.status ?? '未完了') as '未完了' | '着手中' | '完了',
         createdAt: data.createdAt,
-      } as Todo
+      }
     })
   })
-})
+}
 
 onBeforeUnmount(() => {
   if (unsubscribe) unsubscribe()
