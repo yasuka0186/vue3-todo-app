@@ -18,7 +18,7 @@ const router = createRouter({
       component: Login,
     },
     {
-      path: '/todos',
+      path: '/',
       name: 'TodoList',
       component: TodoList,
     },
