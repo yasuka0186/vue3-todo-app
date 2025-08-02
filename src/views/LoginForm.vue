@@ -1,15 +1,33 @@
 <template>
-  <div>
-    <h1>ログイン</h1>
-    <form @submit.prevent="handleLogin">
-      <input v-model="email" type="email" placeholder="メールアドレス" required />
-      <input v-model="password" type="password" placeholder="パスワード" required />
-      <button type="submit">ログイン</button>
+  <div class="flex flex-col items-center justify-center min-h-screen px-4">
+    <!-- ログイン見出し -->
+    <h1 class="text-2xl font-bold mb-4 text-gray-800">ログイン</h1>
+
+    <!-- フォーム -->
+    <form @submit.prevent="handleLogin" class="flex flex-col sm:flex-row gap-2 w-full max-w-md">
+      <input
+        v-model="email"
+        type="email"
+        placeholder="Email"
+        class="flex-1 border border-gray-300 rounded px-4 py-2"
+        required
+      />
+      <input
+        v-model="password"
+        type="password"
+        placeholder="Password"
+        class="flex-1 border border-gray-300 rounded px-4 py-2"
+        required
+      />
+      <button
+        type="submit"
+        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 whitespace-nowrap"
+      >
+        ログイン
+      </button>
     </form>
-    <p v-if="error">{{ error }}</p>
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref } from 'vue'
 import { signInWithEmailAndPassword } from 'firebase/auth'

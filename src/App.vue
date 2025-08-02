@@ -1,13 +1,25 @@
-<script setup lang="ts">
-import Navbar from './components/MainNavbar.vue'
-</script>
-
 <template>
-  <div>
-    <Navbar />
-    <router-view />
+  <div v-if="isAuthReady" class="min-h-screen w-full bg-gray-50 pt-16">
+    <MainNavbar />
+    <main class="w-full max-w-lg mx-auto px-4 py-6">
+      <RouterView />
+    </main>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from './firebase/config'
+
+const isAuthReady = ref(false)
+
+onMounted(() => {
+  onAuthStateChanged(auth, () => {
+    isAuthReady.value = true
+  })
+})
+</script>
 
 <style scoped>
 header {
