@@ -27,7 +27,7 @@ import { useRouter } from 'vue-router'
 import type { Ref } from 'vue'
 import type { User } from 'firebase/auth'
 
-// ✅ Inject user from App.vue
+// Inject user from App.vue
 const injectedUser = inject<Ref<User | null>>('currentUser')
 const user = computed(() => injectedUser?.value ?? null)
 const userEmail = computed(() => user.value?.email ?? '')

@@ -2,7 +2,7 @@
   <div>
     <h1 class="text-xl font-bold mb-4 text-center max-w-lg mx-auto">TODO一覧</h1>
 
-    <!-- ✅ フォーム全体を中央配置＋幅制限 -->
+    <!-- フォーム全体を中央配置＋幅制限 -->
     <form @submit.prevent="addTodo" class="w-full max-w-lg mx-auto flex gap-2 mb-6">
       <input
         v-model="newTodo"
@@ -21,43 +21,76 @@
 
     <!-- TODOリスト全体を包む div を追加 -->
     <div class="w-full max-w-lg mx-auto space-y-4">
-      <li
-        v-for="todo in todos"
-        :key="todo.id"
-        class="p-4 border rounded shadow-sm bg-white flex justify-between items-start"
-      >
-        <div>
-          <p class="text-lg font-medium">{{ todo.title }}</p>
-          <p class="text-sm text-gray-500">作成日: {{ formatDate(todo.createdAt.toDate()) }}</p>
-
-          <span
-            :class="{
-              'text-gray-600': todo.status === '未完了',
-              'text-yellow-600': todo.status === '着手中',
-              'text-green-600': todo.status === '完了',
-            }"
-            class="inline-block mt-1 text-sm font-semibold"
+      <ul class="list-none">
+        <li v-for="todo in todos" :key="todo.id" class="relative bg-white p-4 rounded shadow mb-4">
+          <button
+            @click="openEditModal(todo)"
+            class="absolute top-2 right-2 text-sm text-blue-500 hover:underline"
           >
-            状態: {{ todo.status }}
-          </span>
-
-          <div class="mt-2">
-            <select
-              v-model="todo.status"
-              @change="updateStatus(todo.id, todo.status)"
-              class="border border-gray-300 rounded px-2 py-1 text-sm"
+            編集
+          </button>
+          <div>
+            <p class="text-lg font-medium">{{ todo.title }}</p>
+            <p class="text-sm text-gray-500">作成日: {{ formatDate(todo.createdAt.toDate()) }}</p>
+            <span
+              :class="{
+                'text-gray-600': todo.status === '未完了',
+                'text-yellow-600': todo.status === '着手中',
+                'text-green-600': todo.status === '完了',
+              }"
+              class="inline-block mt-1 text-sm font-semibold"
             >
-              <option value="未完了">未完了</option>
-              <option value="着手中">着手中</option>
-              <option value="完了">完了</option>
-            </select>
-          </div>
-        </div>
+              状態: {{ todo.status }}
+            </span>
 
-        <button @click="deleteTodo(todo.id)" class="text-red-600 hover:text-red-800 text-sm">
-          削除
-        </button>
-      </li>
+            <div class="mt-2">
+              <select
+                v-model="todo.status"
+                @change="updateStatus(todo.id, todo.status)"
+                class="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="未完了">未完了</option>
+                <option value="着手中">着手中</option>
+                <option value="完了">完了</option>
+              </select>
+              <button
+                @click="deleteTodo(todo.id)"
+                class="absolute bottom-2 right-2 text-sm text-red-500 hover:underline"
+              >
+                削除
+              </button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 編集モーダル -->
+    <div
+      v-if="isEditModalOpen"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+        <h2 class="text-lg font-bold mb-4">TODOタイトルの編集</h2>
+        <input
+          type="text"
+          v-model="editTitle"
+          class="border px-3 py-2 w-full rounded mb-4"
+          placeholder="新しいタイトル"
+        />
+
+        <div class="flex justify-end gap-2">
+          <button @click="closeEditModal" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+            キャンセル
+          </button>
+          <button
+            @click="updateTodoTitle"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            保存
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -88,10 +121,13 @@ interface Todo {
 }
 
 const newTodo = ref('')
-// ✅ todos に型情報をつける
+// todos に型情報をつける
 const todos = ref<Todo[]>([])
 const todosRef = collection(db, 'todos')
 const userId = ref<string | null>(null)
+const isEditModalOpen = ref(false)
+const editTitle = ref('')
+const editTodoId = ref<string | null>(null)
 
 onMounted(() => {
   onAuthStateChanged(auth, (user) => {
@@ -118,6 +154,34 @@ const addTodo = async () => {
     newTodo.value = ''
   } catch (err) {
     console.error('TODO追加エラー:', err)
+  }
+}
+
+// 編集モーダルを開く
+const openEditModal = (todo: Todo) => {
+  editTitle.value = todo.title
+  editTodoId.value = todo.id
+  isEditModalOpen.value = true
+}
+
+// 編集モーダルを閉じる
+const closeEditModal = () => {
+  isEditModalOpen.value = false
+  editTitle.value = ''
+  editTodoId.value = null
+}
+
+// Firestoreでタイトルを更新
+const updateTodoTitle = async () => {
+  if (!editTodoId.value) return
+  try {
+    const todoDoc = doc(db, 'todos', editTodoId.value)
+    await updateDoc(todoDoc, {
+      title: editTitle.value,
+    })
+    closeEditModal()
+  } catch (err) {
+    console.error('タイトル更新エラー：', err)
   }
 }
 
