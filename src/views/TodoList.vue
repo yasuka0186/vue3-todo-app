@@ -58,7 +58,7 @@
 
           <!-- 削除ボタン（右下） -->
           <button
-            @click="deleteTodo(todo.id)"
+            @click="openDeleteModal(todo.id)"
             class="absolute bottom-2 right-2 text-red-500 text-sm hover:underline"
           >
             削除
@@ -66,11 +66,60 @@
         </li>
       </ul>
     </div>
+    <div
+      v-if="isEditModalOpen"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+        <h2 class="text-lg font-bold mb-4">TODOタイトルの編集</h2>
+        <input
+          type="text"
+          v-model="editTitle"
+          class="border px-3 py-2 w-full rounded mb-4"
+          placeholder="新しいタイトル"
+        />
+
+        <div class="flex justify-end gap-2">
+          <button @click="closeEditModal" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+            キャンセル
+          </button>
+          <button
+            @click="updateTodoTitle"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            保存
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="isDeleteModalOpen"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+        <h2 class="text-lg font bold mb-4">このTODOを削除してもよろしいですか？</h2>
+        <p class="mb-4 text-gray-700">
+          <span class="font-semibold">「{{ targetTodo?.title || '(タイトルなし)' }}」　</span>
+        </p>
+        <div class="flex justify-end gap-2">
+          <button @click="closeDeleteModal" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+            キャンセル
+          </button>
+          <buttton
+            @click="deleteTodo"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            削除
+          </buttton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import {
   collection,
   query,
@@ -95,6 +144,13 @@ interface Todo {
 
 const newTodo = ref('')
 const todos = ref<Todo[]>([])
+const isEditModalOpen = ref(false)
+const editTitle = ref('')
+const editTodoId = ref<string | null>(null)
+const isDeleteModalOpen = ref(false)
+const deleteTodoId = ref<string | null>(null)
+
+const targetTodo = computed(() => todos.value.find((t) => t.id === deleteTodoId.value) || null)
 
 const addTodo = async () => {
   const title = newTodo.value.trim()
@@ -108,17 +164,60 @@ const addTodo = async () => {
   newTodo.value = ''
 }
 
-const deleteTodo = async (id: string) => {
-  await deleteDoc(doc(db, 'todos', id))
-}
-
 const updateStatus = async (id: string, status: string) => {
   await updateDoc(doc(db, 'todos', id), { status })
 }
 
+// 編集モーダルを開く
 const openEditModal = (todo: Todo) => {
-  // TODO: モーダル編集処理（必要に応じて後日追加）
-  alert(`"${todo.title}" を編集します（実装予定）`)
+  editTitle.value = todo.title
+  editTodoId.value = todo.id
+  isEditModalOpen.value = true
+}
+
+// 編集モーダルを閉じる
+const closeEditModal = () => {
+  isEditModalOpen.value = false
+  editTitle.value = ''
+  editTodoId.value = null
+}
+
+// Firestoreでタイトルを更新
+const updateTodoTitle = async () => {
+  if (!editTodoId.value) return
+  try {
+    const todoDoc = doc(db, 'todos', editTodoId.value)
+    await updateDoc(todoDoc, {
+      title: editTitle.value,
+    })
+    closeEditModal()
+  } catch (err) {
+    console.error('タイトル更新エラー：', err)
+  }
+}
+
+// 削除モーダルを開く
+const openDeleteModal = (id: string) => {
+  deleteTodoId.value = id
+  isDeleteModalOpen.value = true
+}
+
+// 削除モーダルを閉じる
+const closeDeleteModal = () => {
+  isDeleteModalOpen.value = false
+  // deleteTitle.value = ''
+  deleteTodoId.value = null
+}
+
+// Firestoreでタイトルを削除
+const deleteTodo = async () => {
+  if (!deleteTodoId.value) return
+  try {
+    await deleteDoc(doc(db, 'todos', deleteTodoId.value))
+    closeDeleteModal()
+  } catch (err) {
+    console.error('タイトル削除エラー：', err)
+  }
 }
 
 const formatDate = (date: Date) => {
