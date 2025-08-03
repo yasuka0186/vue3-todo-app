@@ -131,6 +131,8 @@ import {
   doc,
   Timestamp,
   where,
+  serverTimestamp,
+  FieldValue,
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { auth } from '../firebase/config'
@@ -141,6 +143,7 @@ interface Todo {
   status: string
   createdAt: Timestamp
   uid: string
+  completedAt?: Timestamp | FieldValue | null
 }
 
 const newTodo = ref('')
@@ -165,8 +168,29 @@ const addTodo = async () => {
   newTodo.value = ''
 }
 
-const updateStatus = async (id: string, status: string) => {
-  await updateDoc(doc(db, 'todos', id), { status })
+const updateStatus = async (id: string, newStatus: string) => {
+  const todoRef = doc(db, 'todos', id)
+
+  const updateData: {
+    status: string
+    completedAt?: Timestamp | FieldValue | null
+  } = {
+    status: newStatus,
+  }
+
+  // 完了した場合、completedAt にサーバータイムスタンプを追加
+  if (newStatus === '完了') {
+    updateData.completedAt = serverTimestamp()
+  } else {
+    // それ以外のステータスに戻した場合は completedAt を null にする
+    updateData.completedAt = null
+  }
+
+  try {
+    await updateDoc(todoRef, updateData)
+  } catch (error) {
+    console.error('ステータス更新エラー:', error)
+  }
 }
 
 // 編集モーダルを開く

@@ -4,7 +4,12 @@
     <ul class="space-y-4">
       <li v-for="todo in completedTodos" :key="todo.id" class="bg-white rounded shadow p-4">
         <strong class="block">{{ todo.title }}</strong>
-        <div class="text-sm text-gray-500">完了日: {{ formatDate(todo.createdAt?.toDate()) }}</div>
+        <div class="text-sm text-gray-500">
+          完了日:
+          <span>
+            {{ todo.completedAt ? formatDate(todo.completedAt.toDate()) : '不明' }}
+          </span>
+        </div>
       </li>
     </ul>
   </div>
@@ -12,9 +17,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore'
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { auth } from '../firebase/config'
+import type { Timestamp } from 'firebase/firestore'
 
 interface Todo {
   id: string
@@ -22,11 +28,12 @@ interface Todo {
   status: string
   createdAt: Timestamp
   uid: string
+  completedAt?: Timestamp | null
 }
 
 const completedTodos = ref<Todo[]>([])
 
-const formatDate = (date: Date) => {
+const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat('ja-JP', {
     year: 'numeric',
     month: '2-digit',
