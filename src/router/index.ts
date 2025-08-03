@@ -4,6 +4,7 @@ import Login from '../views/LoginForm.vue'
 import TodoList from '../views/TodoList.vue'
 import { auth } from '../firebase/config'
 import { onAuthStateChanged } from 'firebase/auth'
+import CompletedTodos from '../views/CompletedTodos.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +23,12 @@ const router = createRouter({
       path: '/',
       name: 'TodoList',
       component: TodoList,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/completed',
+      name: 'CompletedTodos',
+      component: CompletedTodos,
       meta: { requiresAuth: true },
     },
   ],

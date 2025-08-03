@@ -130,6 +130,7 @@ import {
   updateDoc,
   doc,
   Timestamp,
+  where,
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { auth } from '../firebase/config'
@@ -230,12 +231,26 @@ const formatDate = (date: Date) => {
   }).format(date)
 }
 
+// onMounted(() => {
+//   const q = query(collection(db, 'todos'), orderBy('createdAt', 'desc'))
+//   onSnapshot(q, (snapshot) => {
+//     todos.value = snapshot.docs
+//       .map((doc) => ({ id: doc.id, ...doc.data() }) as Todo)
+//       .filter((todo) => todo.uid === auth.currentUser?.uid)
+//   })
+// })
+
 onMounted(() => {
-  const q = query(collection(db, 'todos'), orderBy('createdAt', 'desc'))
+  const q = query(
+    collection(db, 'todos'),
+    where('uid', '==', auth.currentUser?.uid),
+    orderBy('createdAt', 'desc'),
+  )
+
   onSnapshot(q, (snapshot) => {
     todos.value = snapshot.docs
       .map((doc) => ({ id: doc.id, ...doc.data() }) as Todo)
-      .filter((todo) => todo.uid === auth.currentUser?.uid)
+      .filter((todo) => todo.status !== '完了')
   })
 })
 </script>
