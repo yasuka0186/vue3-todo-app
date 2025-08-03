@@ -48,7 +48,7 @@ onMounted(() => {
     collection(db, 'todos'),
     where('uid', '==', auth.currentUser?.uid),
     where('status', '==', '完了'),
-    orderBy('createdAt', 'desc'),
+    orderBy('completedAt', 'desc'),
   )
 
   onSnapshot(q, (snapshot) => {
