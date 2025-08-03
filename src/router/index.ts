@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-//import HomeView from '../views/HomeView.vue'
 import Signup from '../views/SignupForm.vue'
 import Login from '../views/LoginForm.vue'
 import TodoList from '../views/TodoList.vue'
@@ -25,23 +24,10 @@ const router = createRouter({
       component: TodoList,
       meta: { requiresAuth: true },
     },
-    // {
-    //   path: '/',
-    //   name: 'home',
-    //   component: HomeView,
-    // },
-    // {
-    //   path: '/about',
-    //   name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (About.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    //   component: () => import('../views/AboutView.vue'),
-    // },
   ],
 })
 
-// ✅ Firebase Auth の初期化が完了するまで currentUser を待つ
+// Firebase Auth の初期化が完了するまで currentUser を待つ
 let isAuthChecked = false
 const waitForAuth = new Promise((resolve) => {
   onAuthStateChanged(auth, () => {
@@ -50,7 +36,7 @@ const waitForAuth = new Promise((resolve) => {
   })
 })
 
-// ✅ 認証ガード（beforeEach）
+// 認証ガード（beforeEach）
 router.beforeEach(async (to, from, next) => {
   if (!isAuthChecked) {
     await waitForAuth
