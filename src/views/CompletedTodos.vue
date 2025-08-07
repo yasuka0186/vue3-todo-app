@@ -48,6 +48,7 @@
       </div>
     </div>
   </div>
+  <DeleteToast ref="toastRef" />
 </template>
 
 <script setup lang="ts">
@@ -64,6 +65,7 @@ import {
 import { db } from '../firebase/config'
 import { auth } from '../firebase/config'
 import type { Timestamp } from 'firebase/firestore'
+import DeleteToast from '../components/DeleteToast.vue'
 
 interface Todo {
   id: string
@@ -76,6 +78,7 @@ interface Todo {
 
 const completedTodos = ref<Todo[]>([])
 const isConfirmModalOpen = ref(false)
+const toastRef = ref<InstanceType<typeof DeleteToast> | null>(null)
 
 const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat('ja-JP', {
@@ -87,6 +90,7 @@ const formatDate = (date: Date): string => {
   }).format(date)
 }
 
+// リアルタイム取得
 onMounted(() => {
   const q = query(
     collection(db, 'todos'),
@@ -121,10 +125,10 @@ const confirmDeleteAllCompletedTodos = async () => {
     await batch.commit()
     isConfirmModalOpen.value = false
     await fetchCompletedTodos()
-    alert('完了TODOをすべて削除しました。')
+    // 成功したらトーストを表示
+    toastRef.value?.showToast('完了TODOをすべて削除しました！')
   } catch (err) {
     console.error('一括削除エラー:', err)
-    alert('削除中にエラーが発生しました。')
   }
 }
 
