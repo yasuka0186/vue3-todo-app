@@ -1,4 +1,5 @@
 <template>
+  <!-- 完了したTODOの一覧 -->
   <div class="px-4 py-6 max-w-lg mx-auto">
     <h1 class="text-2xl font-bold mb-4">完了したTODO</h1>
     <ul class="space-y-4">
@@ -13,13 +14,38 @@
       </li>
     </ul>
   </div>
+  <!-- 一括削除ボタン　-->
   <div class="flex justify-end mb-4">
     <button
-      @click="deleteAllCompletedTodos"
+      @click="isConfirmModalOpen = true"
       class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm"
     >
       完了TODOをすべて削除
     </button>
+  </div>
+  <!-- 削除確認モーダル -->
+  <div
+    v-if="isConfirmModalOpen"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+  >
+    <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+      <h2 class="text-lg font-bold mb-4">すべての完了TODOを削除しますか？</h2>
+      <p class="mb-4 text-gray-700">この操作は取り消せません。</p>
+      <div class="flex justify-end gap-2">
+        <button
+          @click="isConfirmModalOpen = false"
+          class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+        >
+          キャンセル
+        </button>
+        <button
+          @click="confirmDeleteAllCompletedTodos"
+          class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+        >
+          削除
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -48,6 +74,7 @@ interface Todo {
 }
 
 const completedTodos = ref<Todo[]>([])
+const isConfirmModalOpen = ref(false)
 
 const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat('ja-JP', {
@@ -75,7 +102,8 @@ onMounted(() => {
   })
 })
 
-const deleteAllCompletedTodos = async () => {
+// 完了したTODOの削除
+const confirmDeleteAllCompletedTodos = async () => {
   try {
     const q = query(
       collection(db, 'todos'),
@@ -90,10 +118,27 @@ const deleteAllCompletedTodos = async () => {
     })
 
     await batch.commit()
+    isConfirmModalOpen.value = false
+    await fetchCompletedTodos()
     alert('完了TODOをすべて削除しました。')
   } catch (err) {
     console.error('一括削除エラー:', err)
     alert('削除中にエラーが発生しました。')
   }
+}
+
+// 削除後、一覧を再取得
+const fetchCompletedTodos = async () => {
+  const q = query(
+    collection(db, 'todos'),
+    where('uid', '==', auth.currentUser?.uid),
+    where('status', '==', '完了'),
+    orderBy('completedAt', 'desc'),
+  )
+  const snapshot = await getDocs(q)
+  completedTodos.value = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Todo[]
 }
 </script>
