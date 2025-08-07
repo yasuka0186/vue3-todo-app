@@ -80,6 +80,7 @@ const completedTodos = ref<Todo[]>([])
 const isConfirmModalOpen = ref(false)
 const toastRef = ref<InstanceType<typeof DeleteToast> | null>(null)
 
+// 日付を日本語形式に整形
 const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat('ja-JP', {
     year: 'numeric',
@@ -90,7 +91,7 @@ const formatDate = (date: Date): string => {
   }).format(date)
 }
 
-// リアルタイム取得
+// 完了したTODOをリアルタイム取得
 onMounted(() => {
   const q = query(
     collection(db, 'todos'),
