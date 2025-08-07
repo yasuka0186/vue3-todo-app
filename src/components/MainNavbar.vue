@@ -5,7 +5,7 @@
       <div class="text-xl font-bold whitespace-nowrap">TODOアプリ</div>
 
       <!-- 中央：タブ -->
-      <div class="flex gap-6 text-sm justify-center flex-1">
+      <div v-if="isLoggedIn" class="flex gap-6 text-sm justify-center flex-1">
         <RouterLink
           to="/"
           class="hover:underline"
