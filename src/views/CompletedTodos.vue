@@ -13,11 +13,27 @@
       </li>
     </ul>
   </div>
+  <div class="flex justify-end mb-4">
+    <button
+      @click="deleteAllCompletedTodos"
+      class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm"
+    >
+      完了TODOをすべて削除
+    </button>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore'
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  getDocs,
+  writeBatch,
+} from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { auth } from '../firebase/config'
 import type { Timestamp } from 'firebase/firestore'
@@ -58,4 +74,26 @@ onMounted(() => {
     })) as Todo[]
   })
 })
+
+const deleteAllCompletedTodos = async () => {
+  try {
+    const q = query(
+      collection(db, 'todos'),
+      where('uid', '==', auth.currentUser?.uid),
+      where('status', '==', '完了'),
+    )
+    const snapshot = await getDocs(q)
+
+    const batch = writeBatch(db)
+    snapshot.forEach((doc) => {
+      batch.delete(doc.ref)
+    })
+
+    await batch.commit()
+    alert('完了TODOをすべて削除しました。')
+  } catch (err) {
+    console.error('一括削除エラー:', err)
+    alert('削除中にエラーが発生しました。')
+  }
+}
 </script>
