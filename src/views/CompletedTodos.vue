@@ -1,29 +1,28 @@
 <template>
   <!-- 完了したTODOの一覧 -->
-  <div class="px-4 py-6 max-w-lg mx-auto">
-    <h1 class="text-2xl font-bold mb-4">完了したTODO</h1>
-    <ul class="space-y-4">
-      <li v-for="todo in completedTodos" :key="todo.id" class="bg-white rounded shadow p-4">
-        <strong class="block">{{ todo.title }}</strong>
-        <div class="text-sm text-gray-500">
-          完了日:
-          <span>
-            {{ todo.completedAt ? formatDate(todo.completedAt.toDate()) : '不明' }}
-          </span>
-        </div>
-      </li>
-    </ul>
-  </div>
-  <!-- 一括削除ボタン　-->
-  <div class="flex justify-end mb-4">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold">完了したTODO</h1>
+    <!-- 一括削除ボタン　-->
     <button
       @click="isConfirmModalOpen = true"
       :disabled="completedTodos.length === 0"
-      class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
     >
-      完了TODOをすべて削除
+      一括削除
     </button>
   </div>
+  <!-- 完了したTODO一覧 -->
+  <ul class="space-y-4">
+    <li v-for="todo in completedTodos" :key="todo.id" class="bg-white rounded shadow p-4">
+      <strong class="block">{{ todo.title }}</strong>
+      <div class="text-sm text-gray-500">
+        完了日:
+        <span>
+          {{ todo.completedAt ? formatDate(todo.completedAt.toDate()) : '不明' }}
+        </span>
+      </div>
+    </li>
+  </ul>
   <!-- 削除確認モーダル -->
   <div
     v-if="isConfirmModalOpen"

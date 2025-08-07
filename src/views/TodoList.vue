@@ -24,42 +24,41 @@
           <!-- 編集ボタン（右上） -->
           <button
             @click="openEditModal(todo)"
-            class="absolute top-2 right-2 text-blue-500 text-sm hover:underline"
+            class="absolute top-2 right-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
           >
             編集
           </button>
-
           <div class="text-lg font-semibold">{{ todo.title }}</div>
-          <div class="text-sm text-gray-500">
-            作成日: {{ formatDate(todo.createdAt?.toDate()) }}
-          </div>
-
           <div class="mt-2">
             <span
               class="mr-2 font-semibold"
               :class="{
-                'text-orange-500': todo.status === '着手中',
-                'text-green-600': todo.status === '完了',
-                'text-gray-500': todo.status === '未完了',
+                'text-orange-500': todo.status === '未着手',
+                'text-green-600': todo.status === '着手中',
+                'text-gray-500': todo.status === '完了',
+              }"
+            >
+            </span>
+            <!-- 新: 状態ボタンで表示・変更 -->
+            <button
+              @click="cycleStatus(todo)"
+              class="px-3 py-1 rounded text-sm font-semibold border"
+              :class="{
+                'bg-gray-100 text-gray-700': todo.status === '未着手',
+                'bg-yellow-100 text-yellow-700': todo.status === '着手中',
+                'bg-green-100 text-green-700': todo.status === '完了',
               }"
             >
               状態: {{ todo.status }}
-            </span>
-            <select
-              v-model="todo.status"
-              @change="updateStatus(todo.id, todo.status)"
-              class="border rounded px-2 py-1 text-sm"
-            >
-              <option value="未完了">未完了</option>
-              <option value="着手中">着手中</option>
-              <option value="完了">完了</option>
-            </select>
+            </button>
           </div>
-
+          <div class="text-sm text-gray-500">
+            作成日: {{ formatDate(todo.createdAt?.toDate()) }}
+          </div>
           <!-- 削除ボタン（右下） -->
           <button
             @click="openDeleteModal(todo.id)"
-            class="absolute bottom-2 right-2 text-red-500 text-sm hover:underline"
+            class="absolute bottom-2 right-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
           >
             削除
           </button>
@@ -153,43 +152,46 @@ const editTitle = ref('')
 const editTodoId = ref<string | null>(null)
 const isDeleteModalOpen = ref(false)
 const deleteTodoId = ref<string | null>(null)
-
 const targetTodo = computed(() => todos.value.find((t) => t.id === deleteTodoId.value) || null)
+const statusOrder = ['未着手', '着手中', '完了']
 
+// TODOの追加
 const addTodo = async () => {
   const title = newTodo.value.trim()
   if (!title) return
   await addDoc(collection(db, 'todos'), {
     title,
-    status: '未完了',
+    status: '未着手',
     createdAt: new Date(),
     uid: auth.currentUser?.uid,
   })
   newTodo.value = ''
 }
 
-const updateStatus = async (id: string, newStatus: string) => {
-  const todoRef = doc(db, 'todos', id)
+const cycleStatus = async (todo: Todo) => {
+  const currentIndex = statusOrder.indexOf(todo.status)
+  const nextIndex = (currentIndex + 1) % statusOrder.length
+  const nextStatus = statusOrder[nextIndex]
+
+  const todoRef = doc(db, 'todos', todo.id)
 
   const updateData: {
     status: string
     completedAt?: Timestamp | FieldValue | null
   } = {
-    status: newStatus,
+    status: nextStatus,
   }
 
-  // 完了した場合、completedAt にサーバータイムスタンプを追加
-  if (newStatus === '完了') {
+  if (nextStatus === '完了') {
     updateData.completedAt = serverTimestamp()
   } else {
-    // それ以外のステータスに戻した場合は completedAt を null にする
     updateData.completedAt = null
   }
 
   try {
     await updateDoc(todoRef, updateData)
-  } catch (error) {
-    console.error('ステータス更新エラー:', error)
+  } catch (err) {
+    console.error('ステータス更新エラー:', err)
   }
 }
 
@@ -245,6 +247,7 @@ const deleteTodo = async () => {
   }
 }
 
+// 日付を日本語形式に整形
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('ja-JP', {
     year: 'numeric',
@@ -255,15 +258,7 @@ const formatDate = (date: Date) => {
   }).format(date)
 }
 
-// onMounted(() => {
-//   const q = query(collection(db, 'todos'), orderBy('createdAt', 'desc'))
-//   onSnapshot(q, (snapshot) => {
-//     todos.value = snapshot.docs
-//       .map((doc) => ({ id: doc.id, ...doc.data() }) as Todo)
-//       .filter((todo) => todo.uid === auth.currentUser?.uid)
-//   })
-// })
-
+// TODO一覧をリアルタイムで取得
 onMounted(() => {
   const q = query(
     collection(db, 'todos'),
