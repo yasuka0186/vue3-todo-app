@@ -23,7 +23,7 @@ function showToast(msg: string, duration = 3000) {
     visible.value = false
   }, duration)
 }
-//
+
 defineExpose({ showToast }) // 親から使えるようにする
 </script>
 
