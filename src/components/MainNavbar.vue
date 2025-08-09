@@ -3,7 +3,6 @@
     <div class="flex items-center justify-between px-6 h-16 w-full max-w-screen-xl mx-auto">
       <!-- 左：ロゴ -->
       <div class="text-xl font-bold whitespace-nowrap">TODOアプリ</div>
-
       <!-- 中央：タブ -->
       <div v-if="isLoggedIn" class="flex gap-6 text-sm justify-center flex-1">
         <RouterLink
@@ -30,6 +29,15 @@
         <button @click="handleLogout" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm">
           ログアウト
         </button>
+      </div>
+      <!-- 未ログイン時の右側表示 -->
+      <div v-else class="flex items-center gap-4 whitespace-nowrap">
+        <RouterLink to="/login" class="bg-blue-500 px-3 py-1 rounded hover:bg-blue-600">
+          ログイン
+        </RouterLink>
+        <RouterLink to="/signup" class="bg-green-500 px-3 py-1 rounded hover:bg-green-600">
+          ユーザー登録
+        </RouterLink>
       </div>
     </div>
   </nav>

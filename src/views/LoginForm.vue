@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen px-4">
+  <div>
     <!-- ログイン見出し -->
     <h1 class="text-2xl font-bold mb-4 text-gray-800">ログイン</h1>
 
