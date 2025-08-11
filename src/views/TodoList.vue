@@ -118,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import {
   collection,
   query,
@@ -132,9 +132,13 @@ import {
   where,
   serverTimestamp,
   FieldValue,
+  type DocumentData,
+  type QueryDocumentSnapshot,
+  type FirestoreDataConverter,
 } from 'firebase/firestore'
 import { db } from '../firebase/config'
 import { auth } from '../firebase/config'
+import { onAuthStateChanged } from 'firebase/auth'
 
 interface Todo {
   id: string
@@ -143,6 +147,30 @@ interface Todo {
   createdAt: Timestamp
   uid: string
   completedAt?: Timestamp | FieldValue | null
+}
+
+// Firestore Data Converter
+const todoConverter: FirestoreDataConverter<Todo> = {
+  toFirestore(todo: Todo): DocumentData {
+    return {
+      title: todo.title,
+      status: todo.status,
+      uid: todo.uid,
+      createdAt: todo.createdAt,
+      completedAt: todo.completedAt ?? null,
+    }
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot, options): Todo {
+    const data = snapshot.data(options) as DocumentData
+    return {
+      id: snapshot.id,
+      title: data.title as string,
+      status: (data.status as string) ?? '未着手',
+      uid: data.uid as string,
+      createdAt: data.createdAt as Timestamp,
+      completedAt: (data.completedAt as Timestamp | null | undefined) ?? null,
+    }
+  },
 }
 
 const newTodo = ref('')
@@ -154,16 +182,22 @@ const isDeleteModalOpen = ref(false)
 const deleteTodoId = ref<string | null>(null)
 const targetTodo = computed(() => todos.value.find((t) => t.id === deleteTodoId.value) || null)
 const statusOrder = ['未着手', '着手中', '完了']
+let unsubscribe: (() => void) | null = null
+let unlistenAuth: (() => void) | null = null
 
-// TODOの追加
+// TODO追加
 const addTodo = async () => {
   const title = newTodo.value.trim()
   if (!title) return
+  const user = auth.currentUser
+  if (!user) {
+    return
+  }
   await addDoc(collection(db, 'todos'), {
     title,
     status: '未着手',
-    createdAt: new Date(),
-    uid: auth.currentUser?.uid,
+    createdAt: serverTimestamp(),
+    uid: user.uid,
   })
   newTodo.value = ''
 }
@@ -178,9 +212,7 @@ const cycleStatus = async (todo: Todo) => {
   const updateData: {
     status: string
     completedAt?: Timestamp | FieldValue | null
-  } = {
-    status: nextStatus,
-  }
+  } = { status: nextStatus }
 
   if (nextStatus === '完了') {
     updateData.completedAt = serverTimestamp()
@@ -195,48 +227,39 @@ const cycleStatus = async (todo: Todo) => {
   }
 }
 
-// 編集モーダルを開く
 const openEditModal = (todo: Todo) => {
   editTitle.value = todo.title
   editTodoId.value = todo.id
   isEditModalOpen.value = true
 }
 
-// 編集モーダルを閉じる
 const closeEditModal = () => {
   isEditModalOpen.value = false
   editTitle.value = ''
   editTodoId.value = null
 }
 
-// Firestoreでタイトルを更新
 const updateTodoTitle = async () => {
   if (!editTodoId.value) return
   try {
     const todoDoc = doc(db, 'todos', editTodoId.value)
-    await updateDoc(todoDoc, {
-      title: editTitle.value,
-    })
+    await updateDoc(todoDoc, { title: editTitle.value })
     closeEditModal()
   } catch (err) {
     console.error('タイトル更新エラー：', err)
   }
 }
 
-// 削除モーダルを開く
 const openDeleteModal = (id: string) => {
   deleteTodoId.value = id
   isDeleteModalOpen.value = true
 }
 
-// 削除モーダルを閉じる
 const closeDeleteModal = () => {
   isDeleteModalOpen.value = false
-  // deleteTitle.value = ''
   deleteTodoId.value = null
 }
 
-// Firestoreでタイトルを削除
 const deleteTodo = async () => {
   if (!deleteTodoId.value) return
   try {
@@ -247,7 +270,6 @@ const deleteTodo = async () => {
   }
 }
 
-// 日付を日本語形式に整形
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('ja-JP', {
     year: 'numeric',
@@ -258,18 +280,41 @@ const formatDate = (date: Date) => {
   }).format(date)
 }
 
-// TODO一覧をリアルタイムで取得
+// リアルタイム取得
 onMounted(() => {
-  const q = query(
-    collection(db, 'todos'),
-    where('uid', '==', auth.currentUser?.uid),
-    orderBy('createdAt', 'desc'),
-  )
+  unlistenAuth = onAuthStateChanged(auth, (user) => {
+    console.log('[Auth] onAuthStateChanged:', !!user, user?.uid)
+    // 既存リスナー解除
+    if (unsubscribe) {
+      unsubscribe()
+      unsubscribe = null
+    }
 
-  onSnapshot(q, (snapshot) => {
-    todos.value = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }) as Todo)
-      .filter((todo) => todo.status !== '完了')
+    if (!user) {
+      todos.value = []
+      return
+    }
+
+    const colRef = collection(db, 'todos').withConverter(todoConverter)
+    const q = query(colRef, where('uid', '==', user.uid), orderBy('createdAt', 'desc'))
+
+    unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        console.log('[RT] size:', snapshot.size)
+        snapshot.docs.forEach((d) => console.log('[RT] doc:', d.id, d.data()))
+        const rows: Todo[] = snapshot.docs.map((d) => d.data())
+        todos.value = rows.filter((t) => t.status !== '完了')
+      },
+      (err) => {
+        console.error('[RT] onSnapshot error:', err)
+      },
+    )
   })
+})
+
+onBeforeUnmount(() => {
+  if (unsubscribe) unsubscribe()
+  if (unlistenAuth) unlistenAuth()
 })
 </script>
