@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import {
   collection,
   query,
@@ -65,6 +65,7 @@ import { db } from '../firebase/config'
 import { auth } from '../firebase/config'
 import type { Timestamp } from 'firebase/firestore'
 import DeleteToast from '../components/DeleteToast.vue'
+import { onAuthStateChanged } from 'firebase/auth'
 
 interface Todo {
   id: string
@@ -78,6 +79,8 @@ interface Todo {
 const completedTodos = ref<Todo[]>([])
 const isConfirmModalOpen = ref(false)
 const toastRef = ref<InstanceType<typeof DeleteToast> | null>(null)
+let unsubscribe: (() => void) | null = null
+let unlistenAuth: (() => void) | null = null
 
 // 日付を日本語形式に整形
 const formatDate = (date: Date): string => {
@@ -92,37 +95,65 @@ const formatDate = (date: Date): string => {
 
 // 完了したTODOをリアルタイム取得
 onMounted(() => {
-  const q = query(
-    collection(db, 'todos'),
-    where('uid', '==', auth.currentUser?.uid),
-    where('status', '==', '完了'),
-    orderBy('completedAt', 'desc'),
-  )
+  // 既存リスナー解除
+  unlistenAuth = onAuthStateChanged(auth, (user) => {
+    if (unsubscribe) {
+      unsubscribe()
+      unsubscribe = null
+    }
+    if (!user) {
+      completedTodos.value = []
+      return
+    }
+    const q = query(
+      collection(db, 'todos'),
+      where('uid', '==', user.uid),
+      where('status', '==', '完了'),
+      orderBy('completedAt', 'desc'),
+    )
 
-  onSnapshot(q, (snapshot) => {
-    completedTodos.value = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Todo[]
+    unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        completedTodos.value = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Todo[]
+      },
+      (err) => {
+        console.error('[CompletedTodos onSnapshot error]', err)
+      },
+    )
   })
+})
+
+onBeforeUnmount(() => {
+  if (unsubscribe) unsubscribe()
+  if (unlistenAuth) unlistenAuth()
 })
 
 // 完了したTODOの削除
 const confirmDeleteAllCompletedTodos = async () => {
   try {
+    // 今画面にでている完了TODOのIDを控える（後で消す。）
+    const idsToDelete = completedTodos.value.map((t) => t.id)
+    const user = auth.currentUser
+    if (!user) return
+
     const q = query(
       collection(db, 'todos'),
-      where('uid', '==', auth.currentUser?.uid),
+      where('uid', '==', user.uid),
       where('status', '==', '完了'),
     )
     const snapshot = await getDocs(q)
 
     const batch = writeBatch(db)
-    snapshot.forEach((doc) => {
-      batch.delete(doc.ref)
-    })
-
+    snapshot.forEach((doc) => batch.delete(doc.ref))
     await batch.commit()
+
+    // 楽観的更新：即時にUIから消す
+    completedTodos.value = completedTodos.value.filter((t) => !idsToDelete.includes(t.id))
+
     isConfirmModalOpen.value = false
     await fetchCompletedTodos()
     // 成功したらトーストを表示
