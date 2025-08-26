@@ -107,7 +107,7 @@
           </button>
           <buttton
             @click="deleteTodo"
-            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
           >
             削除
           </buttton>
