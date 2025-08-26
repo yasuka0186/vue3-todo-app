@@ -1,39 +1,92 @@
-# vue3-todo-app
+# Vue3 TODO アプリ
 
-This template should help get you started developing with Vue 3 in Vite.
+Vue 3 + TypeScript + Firebase を用いて開発したシンプルな TODO 管理アプリです。  
+「めんどくさがりで、やることを忘れがちな自分」がタスクを手軽に管理できるように開発しました。
 
-## Recommended IDE Setup
+---
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## アプリ概要
 
-## Type Support for `.vue` Imports in TS
+- Firebase Authentication を使用したログイン機能
+- Firestore によるユーザーごとのTODOデータ保存
+- 完了したTODOと未完了TODOの切り替え表示
+- 完了日での並び替え、一括削除機能、削除確認モーダルなどを実装
+- トースト通知やダークモードにも対応（開発中）
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+---
 
-## Customize configuration
+## 使用技術スタック
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+| 分類           | 使用技術                           |
+| -------------- | ---------------------------------- |
+| フロントエンド | Vue 3, TypeScript, Tailwind CSS    |
+| バックエンド   | Firebase Authentication, Firestore |
+| ビルド／構成   | Vite, ESLint, Prettier, vue-tsc    |
+| ツール         | VSCode, GitHub                     |
 
-## Project Setup
+---
 
-```sh
+## 主な機能
+
+- ユーザー登録／ログイン（Firebase Auth）
+- TODOの追加・編集・削除
+- 完了/未完了の切り替え表示
+- 完了日時でのソート表示
+- 一括削除（確認モーダルあり）
+- トースト通知（成功・失敗）
+
+## スクリーンショット
+
+### ログイン画面
+
+![Login](./screenshots/login.png)
+
+### TODO一覧（未完了）
+
+![Todo List](./screenshots/todo-list.png)
+
+### 完了TODO画面
+
+![Completed Todos](./screenshots/completed.png)
+
+### 一括削除モーダル
+
+![Delete Modal](./screenshots/delete-modal.png)
+
+### トースト通知
+
+![Toast Notification](./screenshots/toast.png)
+
+## セットアップ手順
+
+### 1. 推奨IDE
+
+- [Visual Studio Code](https://code.visualstudio.com/)
+- 拡張機能: [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)（※Veturは無効化）
+
+### 2. プロジェクト初期化
+
+sh
 npm install
-```
 
-### Compile and Hot-Reload for Development
+### 3. 開発サーバー起動（ホットリロード）
 
-```sh
+sh
 npm run dev
-```
 
-### Type-Check, Compile and Minify for Production
+### 4. 型チェック・本番ビルド・最小化
 
-```sh
+sh
 npm run build
-```
 
-### Lint with [ESLint](https://eslint.org/)
+### 5. ESLintによるコード整形チェック
 
-```sh
+sh
 npm run lint
-```
+
+## テスト仕様
+
+機能ごとに手動テストを行っています。  
+テスト状況をまとめたスプレッドシートは以下に格納しています（※開発中）。
+
+[tests/functional_test.xlsx](./tests/functional_test.xlsx)
