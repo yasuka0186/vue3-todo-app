@@ -26,6 +26,7 @@
         ログイン
       </button>
     </form>
+    <BaseToast ref="toastRef" />
   </div>
 </template>
 <script setup lang="ts">
@@ -33,23 +34,33 @@ import { ref } from 'vue'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase/config'
 import { useRouter } from 'vue-router'
+import BaseToast from '../components/BaseToast.vue'
 
 const email = ref('')
 const password = ref('')
 const error = ref('')
+const submitting = ref(false)
 const router = useRouter()
+
+type BaseToastExposed = {
+  showToast: (text: string, type?: 'success' | 'error', duration?: number) => void
+}
+const toastRef = ref<BaseToastExposed | null>(null)
 
 const handleLogin = async () => {
   error.value = ''
   try {
     await signInWithEmailAndPassword(auth, email.value, password.value)
+    toastRef.value?.showToast('ログインに成功しました！', 'success')
     router.push('/')
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      error.value = err.message
-    } else {
-      error.value = '予期せぬエラーが発生しました'
-    }
+  } catch (err) {
+    console.error('ログインエラー：', err)
+    toastRef.value?.showToast(
+      'ログインに失敗しました。メールアドレスまたはパスワードが間違っています。',
+      'error',
+    )
+  } finally {
+    submitting.value = false
   }
 }
 </script>

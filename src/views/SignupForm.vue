@@ -28,7 +28,7 @@
       </button>
     </form>
     <!-- コンポーネント名を合わせる -->
-    <SignupToast ref="toastRef" />
+    <BaseToast ref="toastRef" />
   </div>
 </template>
 
@@ -37,13 +37,13 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase/config'
-import SignupToast from '../components/SignupToast.vue'
+import BaseToast from '../components/BaseToast.vue'
 
 // 子が expose したシグネチャと一致させる
-type SignupToastExposed = {
+type BaseToastExposed = {
   showToast: (text: string, type?: 'success' | 'error', duration?: number) => void
 }
-const toastRef = ref<SignupToastExposed | null>(null)
+const toastRef = ref<BaseToastExposed | null>(null)
 
 const email = ref('')
 const password = ref('')
