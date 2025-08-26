@@ -40,7 +40,9 @@ import { auth } from '../firebase/config'
 import SignupToast from '../components/SignupToast.vue'
 
 // 子が expose したシグネチャと一致させる
-type SignupToastExposed = { showToast: (text: string, duration?: number) => void }
+type SignupToastExposed = {
+  showToast: (text: string, type?: 'success' | 'error', duration?: number) => void
+}
 const toastRef = ref<SignupToastExposed | null>(null)
 
 const email = ref('')
@@ -55,13 +57,13 @@ const handleSignup = async () => {
     await createUserWithEmailAndPassword(auth, email.value, password.value)
 
     // ここでもうエラーは出なくなる
-    toastRef.value?.showToast('ユーザー登録が完了しました！')
+    toastRef.value?.showToast('ユーザー登録が完了しました！', 'success')
 
     // トーストが見えるように少し待ってから遷移（任意）
     setTimeout(() => router.push('/'), 600)
   } catch (err) {
     console.error('ユーザー登録エラー：', err)
-    toastRef.value?.showToast('登録に失敗しました')
+    toastRef.value?.showToast('登録に失敗しました', 'error')
   } finally {
     submitting.value = false
   }
